@@ -2,4 +2,4 @@
 // Created by accord.
 //
 
-#include "lexer/lexer.h"
+#include "lexer/lexer.hpp"
