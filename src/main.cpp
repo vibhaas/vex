@@ -3,12 +3,28 @@
 //
 
 #include <iostream>
-#include "lexer/TokenType.hpp"
-#include "lexer/Token.hpp"
+#include <fstream>
+#include <vector>
 
-int main() {
-    const Token token(TokenType::IDENTIFIER, "fib", 10, 3);
-    std::cout << token.to_string() << std::endl;
+#include "lexer/Token.hpp"
+#include "lexer/Lexer.hpp"
+
+int main(int argc, char** argv) {
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " <filename>" << std::endl;
+        std::exit(64);
+    }
+
+    std::ifstream f(argv[1]);
+    if (!f.good()) {
+        std::cerr << "Could not read " << argv[1] << " !" << std::endl;
+        std::exit(66);
+    }
+
+    std::vector<Token> tokens = Lexer::tokenize(f);
+    for (auto &token : tokens) {
+        std::cout << token.to_string() << std::endl;
+    }
 
     return 0;
 }
