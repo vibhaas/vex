@@ -1,0 +1,7 @@
+i32 x;
+i32 y;
+
+read(x); # read and write being tested
+read(y);
+
+println(x + y);

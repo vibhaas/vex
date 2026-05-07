@@ -11,7 +11,7 @@
 
 
 namespace Lexer {
-    std::vector<Token> tokenize(std::ifstream& f);
+    std::vector<Token> tokenize(std::ifstream& f, bool &lexerError);
 }
 
 #endif //VEXC_LEXER_H

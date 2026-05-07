@@ -1,0 +1,8 @@
+# i32 x = 5 @ 3;
+
+# println("hello);
+
+if true & false:
+{
+    println("bad");
+}

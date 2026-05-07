@@ -21,7 +21,13 @@ int main(int argc, char** argv) {
         std::exit(66);
     }
 
-    std::vector<Token> tokens = Lexer::tokenize(f);
+    bool lexerError = false;
+    std::vector<Token> tokens = Lexer::tokenize(f, lexerError);
+    if (lexerError) {
+        std::cerr << "Compilation stopped : Lexer error." << std::endl;
+        std::exit(65);
+    }
+
     for (auto &token : tokens) {
         std::cout << token.to_string() << std::endl;
     }

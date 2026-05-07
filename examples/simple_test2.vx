@@ -1,0 +1,23 @@
+## Testing operators
+
+i32 a = 10;
+i32 b = 3;
+
+print(a + b);
+print(a - b);
+print(a * b);
+print(a / b);
+print(a % b);
+
+print(a == b);
+print(a != b);
+
+print(a > b);
+print(a >= b);
+
+print(a < b);
+print(a <= b);
+
+print(true && false);
+print(true || false);
+print(!false);
