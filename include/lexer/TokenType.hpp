@@ -41,7 +41,7 @@ enum class TokenType {
 };
 
 // Helper function to get the type
-inline std::string token_type_to_string(const TokenType type) {
+constexpr std::string token_type_to_string(const TokenType type) {
     switch (type) {
         case TokenType::IDENTIFIER:
             return "identifier";

@@ -6,5 +6,4 @@
 #define VEXC_PARSER_H
 
 
-
 #endif //VEXC_PARSER_H

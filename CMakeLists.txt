@@ -6,8 +6,8 @@ set(CMAKE_CXX_STANDARD 20)
 add_executable(vexc
         src/main.cpp
         src/lexer/Lexer.cpp
-        include/lexer/TokenType.hpp
-        include/lexer/Token.hpp
+        src/parser/Parser.cpp
+        include/parser/Ast.hpp
 )
 
 target_include_directories(vexc PRIVATE include)
