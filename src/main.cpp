@@ -9,6 +9,8 @@
 #include "misc/Error_code.hpp"
 #include "lexer/Token.hpp"
 #include "lexer/Lexer.hpp"
+#include "parser/Ast.hpp"
+#include "parser/Parser.hpp"
 
 int main(int argc, char** argv) {
     if (argc != 2) {
@@ -34,6 +36,12 @@ int main(int argc, char** argv) {
     }
 
     // now start parsing
+    Parser parser(std::move(tokens));
+    if (parser.has_errors()) {
+        std::cerr << "Compilation stopped : Parser error." << std::endl;
+        std::cerr << parser.print_errors() << std::endl;
+        std::exit(get_error_code(ErrorCode::DATA_ERROR));
+    }
 
     return 0;
 }
