@@ -43,5 +43,7 @@ int main(int argc, char** argv) {
         std::exit(get_error_code(ErrorCode::DATA_ERROR));
     }
 
+    std::cout << "Parsing successful." << std::endl;
+
     return 0;
 }

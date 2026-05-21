@@ -16,16 +16,18 @@ struct ParseError {
 
 class Parser {
 private:
+    int current = 0;
     std::vector<Token> tokens;
-    std::vector<AST::Stmt> AST;
+    std::vector<AST::Stmt> ast;
     std::vector<ParseError> errors;
 public:
-    explicit Parser(std::vector<Token> p_tokens) : tokens(std::move(p_tokens)) {};
+    explicit Parser(std::vector<Token> p_tokens);
     void parse();
-    bool has_errors();
-    std::string print_errors();
-    std::vector<AST::Stmt> get_ast();
-    std::string print_ast();
+    AST::Expr parse_expression();
+    [[nodiscard]] bool has_errors() const;
+    [[nodiscard]] std::string print_errors() const;
+    [[nodiscard]] std::vector<AST::Stmt> get_ast();
+    [[nodiscard]] std::string print_ast() const;
 };
 
 #endif //VEXC_PARSER_H

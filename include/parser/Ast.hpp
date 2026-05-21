@@ -14,12 +14,42 @@ template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
 namespace AST {
     struct Expr;
+    using ExprPtr = std::unique_ptr<Expr>;
 
-    struct LiteralExpr {
+    struct NumericLiteralExpr { // i32 for now
+        int value;
+    };
+
+    struct BooleanLiteralExpr {
+        bool value;
+    };
+
+    struct StringLiteralExpr { // strings
         std::string value;
     };
 
-    struct GroupingExpr {
+    struct ArrayLiteralExpr { // array literal
+        std::vector<std::unique_ptr<Expr>> expr_list;
+    };
+
+    struct RangeLiteralExpr { // range based arrays
+        std::unique_ptr<Expr> start, end;
+    };
+
+    struct VariableExpr {
+        std::string name;
+    };
+
+    struct ArrayIndexExpr { // array access my_arr[...]
+        std::unique_ptr<Expr> arr_expr, index_expr;
+    };
+
+    struct FunctionCallExpr {
+        std::unique_ptr<Expr> func_expr;
+        std::vector<std::unique_ptr<Expr>> call_expr_list;
+    };
+
+    struct GroupingExpr { // ( ... )
         std::unique_ptr<Expr> expr;
     };
 
@@ -34,35 +64,75 @@ namespace AST {
         std::unique_ptr<Expr> right;
     };
 
-    using ExprNode = std::variant<LiteralExpr, GroupingExpr, UnaryExpr, BinaryExpr>;
+    struct AssignmentExpr {
+        std::unique_ptr<Expr> left;
+        std::unique_ptr<Expr> right;
+    };
+
+    using ExprNode = std::variant<NumericLiteralExpr, BooleanLiteralExpr, StringLiteralExpr, ArrayLiteralExpr, RangeLiteralExpr,
+        VariableExpr, ArrayIndexExpr, FunctionCallExpr, GroupingExpr, UnaryExpr, BinaryExpr, AssignmentExpr>;
 
     struct Expr {
         ExprNode node;
     };
 
-    inline std::string print_Expr(const Expr &expr) {
+    inline std::string print_expr_dump(const Expr &expr) {
         return std::visit(overloaded {
-            [](const LiteralExpr& lit) -> std::string {
-                return "<literal: " + lit.value + ">";
+            [](const NumericLiteralExpr& exp) -> std::string {
+                return "<NumericLiteralExpr: " + std::to_string(exp.value) + ">";
             },
-            [](const GroupingExpr& group) -> std::string {
-                return "(group " + print_Expr(*group.expr) + ")";
+            [](const BooleanLiteralExpr& exp) -> std::string {
+                return std::string("<BooleanLiteralExpr: ") + (exp.value ? "true" : "false") + ">";
             },
-            [](const UnaryExpr& unary) -> std::string {
-                return "([" + token_type_to_string(unary.op) + "] " + print_Expr(*unary.expr) + ")";
+            [](const StringLiteralExpr& exp) -> std::string {
+                return "<StringLiteralExpr: " + exp.value + ">";
             },
-            [](const BinaryExpr& bin) -> std::string {
-                return "([" + token_type_to_string(bin.op) + "] " + print_Expr(*bin.left) + " " + print_Expr(*bin.right) + ")";
+            [](const ArrayLiteralExpr& exp) -> std::string {
+                std::string resp = "<ArrayLiteralExpr: ";
+                for (const auto& el : exp.expr_list) {
+                    resp += print_expr_dump(*el) + ", ";
+                }
+                resp += ">";
+                return resp;
+            },
+            [](const RangeLiteralExpr& exp) -> std::string {
+                return "<RangeLiteralExpr: " + print_expr_dump(*exp.start) + ", " + print_expr_dump(*exp.end) + ">";
+            },
+            [](const VariableExpr& exp) -> std::string {
+                return "<<VariableExpr: " + exp.name + ">>";
+            },
+            [](const ArrayIndexExpr& exp) -> std::string {
+                return "<<ArrayIndexExpr: " + print_expr_dump(*exp.arr_expr) + "[" + print_expr_dump(*exp.index_expr) + "] >>";
+            },
+            [](const FunctionCallExpr& exp) -> std::string {
+                std::string resp = "<<FunctionCallExpr: " + print_expr_dump(*exp.func_expr) + "(";
+                for (const auto& el : exp.call_expr_list) {
+                    resp += print_expr_dump(*el) + ", ";
+                }
+                resp += ") >>";
+                return resp;
+            },
+            [](const GroupingExpr& exp) -> std::string {
+                return "(GroupingExpr: " + print_expr_dump(*exp.expr) + ")";
+            },
+            [](const UnaryExpr& exp) -> std::string {
+                return "(UnaryExpr[" + token_type_to_string(exp.op) + "]: " + print_expr_dump(*exp.expr) + ")";
+            },
+            [](const BinaryExpr& exp) -> std::string {
+                return "(BinaryExpr[" + token_type_to_string(exp.op) + "]: " + print_expr_dump(*exp.left) + " " + print_expr_dump(*exp.right) + ")";
+            },
+            [](const AssignmentExpr& exp) -> std::string {
+                return "(AssignmentExpr: " + print_expr_dump(*exp.left) + " = " + print_expr_dump(*exp.right) + ")";
             }
         }, expr.node);
-    };
+    }
 
     struct Stmt {
         std::unique_ptr<Expr> expr;
     };
 
-    inline std::string print_Stmt(const Stmt &stmt) {
-        return print_Expr(*stmt.expr);
+    inline std::string print_stmt(const Stmt &stmt) {
+        return print_expr_dump(*stmt.expr);
     }
 }
 
