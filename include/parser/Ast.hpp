@@ -16,16 +16,8 @@ namespace AST {
     struct Expr;
     //using ExprPtr = std::unique_ptr<Expr>;
 
-    struct NumericLiteralExpr { // i32 for now
-        int value;
-    };
-
-    struct BooleanLiteralExpr {
-        bool value;
-    };
-
-    struct StringLiteralExpr { // strings
-        std::string value;
+    struct BasicLiteralExpr { // i32, bool, string
+        Token value;
     };
 
     struct ArrayLiteralExpr { // array literal
@@ -69,7 +61,7 @@ namespace AST {
         std::unique_ptr<Expr> right;
     };
 
-    using ExprNode = std::variant<NumericLiteralExpr, BooleanLiteralExpr, StringLiteralExpr, ArrayLiteralExpr, RangeLiteralExpr,
+    using ExprNode = std::variant<BasicLiteralExpr, ArrayLiteralExpr, RangeLiteralExpr,
         VariableExpr, ArrayIndexExpr, FunctionCallExpr, GroupingExpr, UnaryExpr, BinaryExpr, AssignmentExpr>;
 
     struct Expr {
@@ -78,14 +70,8 @@ namespace AST {
 
     inline std::string print_expr_dump(const Expr &expr) {
         return std::visit(overloaded {
-            [](const NumericLiteralExpr& exp) -> std::string {
-                return "<NumericLiteralExpr: " + std::to_string(exp.value) + ">";
-            },
-            [](const BooleanLiteralExpr& exp) -> std::string {
-                return std::string("<BooleanLiteralExpr: ") + (exp.value ? "true" : "false") + ">";
-            },
-            [](const StringLiteralExpr& exp) -> std::string {
-                return "<StringLiteralExpr: " + exp.value + ">";
+            [](const BasicLiteralExpr& exp) -> std::string {
+                return "<BasicLiteralExpr: " + exp.value.to_string() + ">";
             },
             [](const ArrayLiteralExpr& exp) -> std::string {
                 std::string resp = "<ArrayLiteralExpr: ";
@@ -133,6 +119,14 @@ namespace AST {
 
     inline std::string print_stmt(const Stmt &stmt) {
         return print_expr_dump(*stmt.expr);
+    }
+
+    inline std::string pretty_print_expr(const Expr &expr) {
+        return "TODO"; // TODO : implement this
+    }
+
+    inline std::string pretty_print_stmt(const Stmt &stmt) {
+        return pretty_print_expr(*stmt.expr);
     }
 }
 

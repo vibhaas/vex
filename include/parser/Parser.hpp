@@ -42,7 +42,11 @@ private:
     void synchronize();
 
     void parse_statement();
-    std::unique_ptr<AST::Expr> parse_expression();
+
+    static int get_prefix_bp(TokenType type);
+    static std::pair<int, int> get_infix_bp(TokenType type);
+    // static int get_postfix_bp(TokenType type);
+    std::unique_ptr<AST::Expr> parse_expr_bp(int min_bp);
 
 public:
     explicit Parser(std::vector<Token> p_tokens);

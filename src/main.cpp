@@ -37,6 +37,7 @@ int main(int argc, char** argv) {
 
     // now start parsing
     Parser parser(std::move(tokens));
+    parser.parse();
     if (parser.has_errors()) {
         std::cerr << "Compilation stopped : Parser error." << std::endl;
         std::cerr << parser.print_errors() << std::endl;
@@ -44,6 +45,7 @@ int main(int argc, char** argv) {
     }
 
     std::cout << "Parsing successful." << std::endl;
+    std::cout << parser.print_ast() << std::endl;
 
     return 0;
 }
