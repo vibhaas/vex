@@ -5,6 +5,7 @@
 #ifndef VEXC_AST_H
 #define VEXC_AST_H
 #include <memory>
+#include <optional>
 #include <string>
 #include <variant>
 #include <lexer/TokenType.hpp>
@@ -16,7 +17,7 @@ namespace AST {
     struct Expr;
     //using ExprPtr = std::unique_ptr<Expr>;
 
-    struct BasicLiteralExpr { // i32, bool, string
+    struct BasicLiteralExpr { // i32, bool, string, nil
         Token value;
     };
 
@@ -113,21 +114,197 @@ namespace AST {
         }, expr.node);
     }
 
-    struct Stmt {
+    struct Stmt;
+
+    struct ExprStmt {
         std::unique_ptr<Expr> expr;
     };
 
-    inline std::string print_stmt(const Stmt &stmt) {
-        return print_expr_dump(*stmt.expr);
+    struct BlockStmt {
+        std::vector<std::unique_ptr<Stmt>> stmt_list;
+    };
+
+    /*** Var Types - helper structs ***/
+
+    enum class VarTypeOpts { // int32, bool (true / false)
+        INT32, BOOL
+    };
+
+    struct VarTypeSpec {
+        VarTypeOpts type;
+        bool is_array;
+        std::optional<int> size;
+    };
+
+    inline std::string print_var_type_spec_dump(const VarTypeSpec& type) { // for future dumping
+        std::string resp = (type.type == VarTypeOpts::INT32) ? "i32" : "bool";
+        if (type.is_array) {
+            resp += "[";
+            if (type.size) resp += std::to_string(*type.size);
+            resp += "]";
+        }
+        return resp;
     }
 
-    inline std::string pretty_print_expr(const Expr &expr) {
-        return "TODO"; // TODO : implement this
+    /*** End Var Types ***/
+
+    struct VarDeclStmt {
+        VarTypeSpec type;
+        std::string name;
+        std::unique_ptr<Expr> init;
+    };
+
+    struct IOPrintStmt {
+        std::vector<std::unique_ptr<Expr>> expr_list;
+    };
+
+    struct IOPrintlnStmt {
+        std::vector<std::unique_ptr<Expr>> expr_list;
+    };
+
+    struct IOReadStmt {
+        std::vector<std::string> names;
+    };
+
+    struct IfElseStmt {
+        std::unique_ptr<Expr> condition;
+        std::unique_ptr<Stmt> then_branch, else_branch;
+    };
+
+    struct Param { // helper struct
+        VarTypeSpec type;
+        std::string name;
+    };
+
+    struct FuncDeclStmt {
+        std::string name;
+        std::optional<VarTypeSpec> return_type;
+        std::vector<Param> param_list;
+        std::unique_ptr<Stmt> body;
+    };
+
+    struct ReturnStmt {
+        std::unique_ptr<Expr> expr; // note -> nil returns will be a nullptr here
+    };
+
+    struct ForLoopStmt {
+        std::string iter_name;
+        std::unique_ptr<Expr> iterable;
+        std::unique_ptr<Stmt> body;
+    };
+
+    struct WhileLoopStmt {
+        std::unique_ptr<Expr> cond;
+        std::unique_ptr<Stmt> body;
+    };
+
+    struct BreakStmt {};
+    struct ContinueStmt {};
+    struct ExitStmt {
+        std::unique_ptr<Expr> expr;
+    };
+
+    using StmtNode = std::variant<ExprStmt, BlockStmt, VarDeclStmt, IOPrintStmt, IOPrintlnStmt, IOReadStmt, IfElseStmt, FuncDeclStmt,
+    ReturnStmt, ForLoopStmt, WhileLoopStmt, BreakStmt, ContinueStmt, ExitStmt>;
+
+    struct Stmt {
+        StmtNode node;
+    };
+
+    // dump of statements
+    inline std::string print_stmt_dump(const Stmt& stmt) {
+        auto join_exprs = [](const auto& vec) { // helper
+            std::string resp;
+            for (size_t i = 0; i < vec.size(); i++) {
+                if (i) resp += ", ";
+                resp += print_expr_dump(*vec[i]);
+            }
+            return resp;
+        };
+
+        auto join_names = [](const auto& vec) { // helper
+            std::string resp;
+            for (size_t i = 0; i < vec.size(); i++) {
+                if (i) resp += ", ";
+                resp += vec[i];
+            }
+            return resp;
+        };
+
+        return std::visit(overloaded{
+            [&](const ExprStmt& st) -> std::string {
+                return "<ExprStmt: " + print_expr_dump(*st.expr) + ">";
+            },
+            [&](const BlockStmt& st) -> std::string {
+                std::string resp = "<BlockStmt: ";
+                for (const auto& el : st.stmt_list) resp += print_stmt_dump(*el) + "; ";
+                resp += ">";
+                return resp;
+            },
+            [&](const VarDeclStmt& st) -> std::string {
+                std::string resp = "<VarDeclStmt: " + print_var_type_spec_dump(st.type) + " " + st.name;
+                if (st.init) resp += " = " + print_expr_dump(*st.init);
+                resp += ">";
+                return resp;
+            },
+            [&](const IOPrintStmt& st) -> std::string {
+                return "<IOPrintStmt: PRINT(" + join_exprs(st.expr_list) + ")>";
+            },
+            [&](const IOPrintlnStmt& st) -> std::string {
+                return "<IOPrintlnStmt: PRINTLN(" + join_exprs(st.expr_list) + ")>";
+            },
+            [&](const IOReadStmt& st) -> std::string {
+                return "<IOReadStmt: READ(" + join_names(st.names) + ")>";
+            },
+            [&](const IfElseStmt& st) -> std::string {
+                std::string resp = "<IfElseStmt: IF " + print_expr_dump(*st.condition)
+                                 + " THEN " + print_stmt_dump(*st.then_branch);
+                if (st.else_branch) resp += " ELSE " + print_stmt_dump(*st.else_branch);
+                resp += ">";
+                return resp;
+            },
+            [&](const FuncDeclStmt& st) -> std::string {
+                std::string resp = "<FuncDeclStmt: FUNCTION " + st.name + "(";
+                for (size_t i = 0; i < st.param_list.size(); i++) {
+                    if (i) resp += ", ";
+                    resp += print_var_type_spec_dump(st.param_list[i].type) + " " + st.param_list[i].name;
+                }
+                resp += ")";
+                if (st.return_type) resp += " -> " + print_var_type_spec_dump(*st.return_type);
+                resp += " " + print_stmt_dump(*st.body) + ">";
+                return resp;
+            },
+            [&](const ReturnStmt& st) -> std::string {
+                return st.expr ? "<ReturnStmt: RETURN " + print_expr_dump(*st.expr) + ">"
+                               : "<ReturnStmt: RETURN>";
+            },
+            [&](const ForLoopStmt& st) -> std::string {
+                return "<ForLoopStmt: FOR " + st.iter_name + " IN " + print_expr_dump(*st.iterable)
+                     + " DO " + print_stmt_dump(*st.body) + ">";
+            },
+            [&](const WhileLoopStmt& st) -> std::string {
+                return "<WhileLoopStmt: WHILE " + print_expr_dump(*st.cond)
+                     + " DO " + print_stmt_dump(*st.body) + ">";
+            },
+            [&](const BreakStmt&) -> std::string {
+                return "<BreakStmt>";
+            },
+            [&](const ContinueStmt&) -> std::string {
+                return "<ContinueStmt>";
+            },
+            [&](const ExitStmt& st) -> std::string {
+                return "<ExitStmt: EXIT(" + print_expr_dump(*st.expr) + ")>";
+            }
+        }, stmt.node);
     }
 
-    inline std::string pretty_print_stmt(const Stmt &stmt) {
-        return pretty_print_expr(*stmt.expr);
-    }
+    // inline std::string pretty_print_expr(const Expr &expr) {
+    //     return "TODO"; // TODO : implement this
+    // }
+    //
+    // inline std::string pretty_print_stmt(const Stmt &stmt) {
+    //     return pretty_print_expr(*stmt.expr);
+    // }
 }
 
 #endif //VEXC_AST_H

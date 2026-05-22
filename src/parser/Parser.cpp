@@ -19,7 +19,9 @@ bool Parser::has_errors() const {
 std::string Parser::print_errors() const {
     std::string value;
     for (const auto &error : errors) {
-        value += "Error on token " + error.token.to_string() + " : " + error.message + "\n";
+        value += std::string("Parser Error on token <") + token_type_to_string(error.token.type) + "> : \"" + error.token.lexeme
+        + "\" on line " + std::to_string(error.token.line) + " character " + std::to_string(error.token.column) + " : "
+        + error.message + "\n";
     }
     return value;
 }
@@ -39,10 +41,6 @@ std::string Parser::print_ast() const {
 
 const Token& Parser::peek() const {
     return tokens[current];
-}
-
-const Token& Parser::next_token() const {
-    return tokens[current+1];
 }
 
 const Token& Parser::previous_token() const {
@@ -90,10 +88,6 @@ void Parser::synchronize() {
     if (is_at_semi()) advance();
 }
 
-// Gonna switch up and use Pratt Parsing (https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html)
-// Because honestly, f*** the idea of sitting down and
-// writing expression, subexpression, term, factor, atom, blah blah grammar rules
-// when I can be sane
 void Parser::parse() {
     // cool time to do stuff now
     // parse each statement at a time
@@ -112,6 +106,11 @@ void Parser::parse_statement() {
     ast.emplace_back(parse_expr_bp(0));
     consume(TokenType::SEMICOLON, "Expected closing ';' for statement");
 }
+
+// Gonna switch up and use Pratt Parsing for expressions (https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html)
+// Because honestly, f*** the idea of sitting down and
+// writing expression, subexpression, term, factor, atom, blah blah grammar rules
+// when I can be sane
 
 int Parser::get_prefix_bp(const TokenType type) {
     switch(type) {
@@ -151,17 +150,6 @@ std::pair<int, int> Parser::get_infix_bp(const TokenType type) {
     }
 }
 
-// maybe useless?
-// int Parser::get_postfix_bp(const TokenType type) {
-//     switch (type) {
-//         case TokenType::LEFT_PAREN:
-//         case TokenType::LEFT_SQUARE_BRACKET:
-//             return 100;
-//         default:
-//             return -1;
-//     }
-// }
-
 std::unique_ptr<AST::Expr> Parser::parse_expr_bp(const int min_bp) {
     std::unique_ptr<AST::Expr> lhs;
 
@@ -177,17 +165,38 @@ std::unique_ptr<AST::Expr> Parser::parse_expr_bp(const int min_bp) {
         std::unique_ptr<AST::Expr> inner_expr = parse_expr_bp(get_prefix_bp(tok_type));
         lhs = std::make_unique<AST::Expr>(AST::UnaryExpr{tok_type, std::move(inner_expr)});
     }
-    // atomic expression - only int, string, bool literal for now
-    else if (match({TokenType::NUMBER, TokenType::TRUE, TokenType::FALSE, TokenType::STRING})) {
+    // atomic expression - only int, string, bool, nil literal for now
+    else if (match({TokenType::NUMBER, TokenType::TRUE, TokenType::FALSE, TokenType::STRING, TokenType::NIL})) {
         const auto tok = previous_token();
         lhs = std::make_unique<AST::Expr>(AST::BasicLiteralExpr(tok));
     }
-    // TODO: more atomic expression - identifiers (variables) + array literals + array range literals (later)
+    else if (match(TokenType::IDENTIFIER)) {
+        lhs = std::make_unique<AST::Expr>(AST::VariableExpr{previous_token().lexeme});
+    }
+    else if (match(TokenType::LEFT_SQUARE_BRACKET)) {
+        std::vector<std::unique_ptr<AST::Expr>> exprs;
+        exprs.emplace_back(parse_expr_bp(0));
+        if (match(TokenType::DOUBLE_DOT)) {
+            exprs.emplace_back(parse_expr_bp(0));
+            lhs = std::make_unique<AST::Expr>(AST::RangeLiteralExpr{std::move(exprs[0]), std::move(exprs[1])});
+            consume(TokenType::RIGHT_SQUARE_BRACKET, "Expected closing parenthesis ']' for Range Array literal.");
+        }
+        else {
+            while (true) {
+                if (!match(TokenType::COMMA)) break;
+                exprs.emplace_back(parse_expr_bp(0));
+            }
+            consume(TokenType::RIGHT_SQUARE_BRACKET, "Expected closing parenthesis ']' for Array literal.");
+            lhs = std::make_unique<AST::Expr>(AST::ArrayLiteralExpr{std::move(exprs)});
+        }
+    }
     else throw ParseException("Unexpected token in expression.");
 
     while (true) {
-        // break on semicolon, closing paren, closing array, comma operator
-        if (is_at_semi() || check(TokenType::RIGHT_PAREN) || check(TokenType::RIGHT_SQUARE_BRACKET) || check(TokenType::COMMA)) break;
+        // break on semicolon, closing paren, closing array, comma operator, double dot operator
+        if (is_at_semi() || check(TokenType::RIGHT_PAREN) || check(TokenType::RIGHT_SQUARE_BRACKET)
+            || check(TokenType::COMMA) || check(TokenType::DOUBLE_DOT))
+            break;
 
         // handle post-fix first
         // arrays
@@ -216,6 +225,11 @@ std::unique_ptr<AST::Expr> Parser::parse_expr_bp(const int min_bp) {
         const auto op { peek().type }; // TODO: way in the future : start using { ... } init style everywhere
         advance();
         auto rhs { parse_expr_bp(rbp) };
+
+        if (op == TokenType::EQUAL) {
+            lhs = std::make_unique<AST::Expr>(AST::AssignmentExpr{std::move(lhs), std::move(rhs)});
+            continue;
+        }
 
         lhs = std::make_unique<AST::Expr>(AST::BinaryExpr{std::move(lhs), op, std::move(rhs)});
     }

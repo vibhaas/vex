@@ -51,3 +51,25 @@ Note : I used C / C++ priorities acting as reference
 - We can keep the idea for future extension tho >.<
 - to-do way in the future : start using { ... } init style everywhere
 
+- OKAY! Expression parsing is done... onward to statements!
+
+##### AST structure for statements
+
+```text
+-> ExprStatement ---------------> leftover default (?)
+-> Block -> just a group of statements ----> starts with {
+-> VarDeclStatement ----> starts with a variable type name
+-> OPrintStatement  ------> print(
+-> IOPrintlnStatement -----> println(
+-> IOReadStatement  -----> read(
+-> IfElseStatement (Note: Elif will be lowered here) -----> if
+-> FuncDeclStatement  ---> fun 
+-> ReturnStatement ----> return
+-> ForLoopStatement ---> for 
+-> WhileLoopStatement ----> while 
+-> BreakStatement ----> break
+-> ContinueStatement ---> continue
+-> ExitStatement ---> exit(
+```
+
+Note : empty statements can be ignored
