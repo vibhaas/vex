@@ -14,7 +14,7 @@ template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
 namespace AST {
     struct Expr;
-    using ExprPtr = std::unique_ptr<Expr>;
+    //using ExprPtr = std::unique_ptr<Expr>;
 
     struct NumericLiteralExpr { // i32 for now
         int value;
