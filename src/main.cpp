@@ -9,7 +9,7 @@
 #include "misc/Error_code.hpp"
 #include "lexer/Token.hpp"
 #include "lexer/Lexer.hpp"
-#include "parser/Ast.hpp"
+#include "ast/Ast.hpp"
 #include "parser/Parser.hpp"
 
 int main(int argc, char** argv) {

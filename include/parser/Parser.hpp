@@ -8,7 +8,7 @@
 #include <string>
 #include "lexer/TokenType.hpp"
 #include "lexer/Token.hpp"
-#include "parser/Ast.hpp"
+#include "ast/Ast.hpp"
 
 struct ParseError {
     Token token;

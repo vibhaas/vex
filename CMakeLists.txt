@@ -10,9 +10,11 @@ add_executable(vexc
         include/lexer/TokenType.hpp
         include/lexer/Lexer.hpp
         src/lexer/Lexer.cpp
-        include/parser/Ast.hpp
+        include/ast/Ast.hpp
         include/parser/Parser.hpp
         src/parser/Parser.cpp
+        src/semantics/Semantics.cpp
+        include/semantics/Semantics.hpp
 )
 
 target_include_directories(vexc PRIVATE include)

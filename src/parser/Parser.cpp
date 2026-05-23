@@ -8,7 +8,7 @@
 #include <vector>
 #include <string>
 #include "lexer/Token.hpp"
-#include "parser/Ast.hpp"
+#include "ast/Ast.hpp"
 
 Parser::Parser(std::vector<Token> p_tokens) : tokens(std::move(p_tokens)) {};
 
