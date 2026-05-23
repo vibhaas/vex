@@ -32,7 +32,7 @@ enum class TokenType {
     // Keywords
     INT32, BOOL, NIL,
     TRUE, FALSE,
-    IF, ELIF, ELSE, BREAK,
+    IF, ELIF, ELSE, BREAK, CONTINUE,
     FUN, RETURN, EXIT,
     WHILE, FOR, IN,
     READ, PRINT, PRINTLN,
@@ -122,6 +122,8 @@ constexpr std::string token_type_to_string(const TokenType type) {
             return "else";
         case TokenType::BREAK:
             return "break";
+        case TokenType::CONTINUE:
+            return "continue";
         case TokenType::FUN:
             return "fun";
         case TokenType::RETURN:

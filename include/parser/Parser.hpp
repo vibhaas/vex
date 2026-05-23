@@ -26,11 +26,10 @@ class Parser {
 private:
     int current = 0;
     std::vector<Token> tokens;
-    std::vector<AST::Stmt> ast;
+    std::vector<std::unique_ptr<AST::Stmt>> ast;
     std::vector<ParseError> errors;
 
     [[nodiscard]] const Token& peek() const;
-    [[nodiscard]] const Token& next_token() const;
     [[nodiscard]] const Token& previous_token() const;
     const Token& advance();
     [[nodiscard]] bool check(TokenType type) const;
@@ -41,19 +40,30 @@ private:
     const Token& consume(TokenType type, const std::string &msg);
     void synchronize();
 
-    void parse_statement();
-
     static int get_prefix_bp(TokenType type);
     static std::pair<int, int> get_infix_bp(TokenType type);
-    // static int get_postfix_bp(TokenType type);
     std::unique_ptr<AST::Expr> parse_expr_bp(int min_bp);
 
+    std::unique_ptr<AST::Stmt> parse_statement();
+    std::unique_ptr<AST::Stmt> parse_block_stmt();
+    AST::VarTypeSpec parse_var_type();
+    std::unique_ptr<AST::Stmt> parse_function_stmt();
+    std::unique_ptr<AST::Stmt> parse_variable_decl_stmt();
+    std::unique_ptr<AST::Stmt> parse_io_stmt();
+    std::unique_ptr<AST::Stmt> parse_expression_stmt();
+    std::unique_ptr<AST::Stmt> parse_if_else_stmt();
+    std::unique_ptr<AST::Stmt> parse_for_stmt();
+    std::unique_ptr<AST::Stmt> parse_while_stmt();
+    std::unique_ptr<AST::Stmt> parse_return_stmt();
+    static std::unique_ptr<AST::Stmt> parse_break_stmt();
+    static std::unique_ptr<AST::Stmt> parse_continue_stmt();
+    std::unique_ptr<AST::Stmt> parse_exit_stmt();
 public:
     explicit Parser(std::vector<Token> p_tokens);
     void parse();
     [[nodiscard]] bool has_errors() const;
     [[nodiscard]] std::string print_errors() const;
-    [[nodiscard]] std::vector<AST::Stmt> get_ast();
+    [[nodiscard]] std::vector<std::unique_ptr<AST::Stmt>> get_ast();
     [[nodiscard]] std::string print_ast() const;
 };
 

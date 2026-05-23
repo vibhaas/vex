@@ -122,6 +122,7 @@ namespace AST {
 
     struct BlockStmt {
         std::vector<std::unique_ptr<Stmt>> stmt_list;
+        bool special_dont_change_scope = false; // (hacky, for lowering of multi-statements, see var decl in parser etc.)
     };
 
     /*** Var Types - helper structs ***/
@@ -168,7 +169,8 @@ namespace AST {
 
     struct IfElseStmt {
         std::unique_ptr<Expr> condition;
-        std::unique_ptr<Stmt> then_branch, else_branch;
+        std::unique_ptr<Stmt> then_branch;
+        std::unique_ptr<Stmt> else_branch;
     };
 
     struct Param { // helper struct

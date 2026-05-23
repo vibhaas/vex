@@ -31,9 +31,9 @@ int main(int argc, char** argv) {
         std::exit(get_error_code(ErrorCode::DATA_ERROR));
     }
 
-    for (auto &token : tokens) {
-        std::cout << token.to_string() << std::endl;
-    }
+    // for (auto &token : tokens) { // Later, set flags for thi
+    //     std::cout << token.to_string() << std::endl;
+    // }
 
     // now start parsing
     Parser parser(std::move(tokens));

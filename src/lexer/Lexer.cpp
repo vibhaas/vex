@@ -245,6 +245,7 @@ namespace Lexer {
                     else if (temp == "elif") tokens.emplace_back(TokenType::ELIF, "elif", row, i);
                     else if (temp == "else") tokens.emplace_back(TokenType::ELSE, "else", row, i);
                     else if (temp == "break") tokens.emplace_back(TokenType::BREAK, "break", row, i);
+                    else if (temp == "continue") tokens.emplace_back(TokenType::CONTINUE, "continue", row, i);
                     else if (temp == "fun") tokens.emplace_back(TokenType::FUN, "fun", row, i);
                     else if (temp == "return") tokens.emplace_back(TokenType::RETURN, "return", row, i);
                     else if (temp == "exit") tokens.emplace_back(TokenType::EXIT, "exit", row, i);

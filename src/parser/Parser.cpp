@@ -4,6 +4,7 @@
 
 #include "parser/Parser.hpp"
 
+#include <iostream>
 #include <vector>
 #include <string>
 #include "lexer/Token.hpp"
@@ -25,13 +26,13 @@ std::string Parser::print_errors() const {
     }
     return value;
 }
-std::vector<AST::Stmt> Parser::get_ast()  {
+std::vector<std::unique_ptr<AST::Stmt>> Parser::get_ast()  {
     return std::move(ast);
 }
 std::string Parser::print_ast() const {
     std::string value;
     for (const auto &stmt : ast) {
-        value += print_stmt(stmt);
+        value += AST::print_stmt_dump(*stmt);
         value += " END_STATEMENT; \n";
     }
     return value;
@@ -93,18 +94,17 @@ void Parser::parse() {
     // parse each statement at a time
     while (!is_at_end()) {
         try {
-            parse_statement();
+            if (std::unique_ptr<AST::Stmt> res{parse_statement()}; res != nullptr) ast.emplace_back(std::move(res));
         }
         catch (const ParseException& e) {
             errors.emplace_back(peek(), e.what());
             synchronize();
         }
+        catch (const std::exception& e) {
+            errors.emplace_back(peek(), std::string("Critical error! Stopping Parsing. Details : ") + e.what());
+            return;
+        }
     }
-}
-
-void Parser::parse_statement() {
-    ast.emplace_back(parse_expr_bp(0));
-    consume(TokenType::SEMICOLON, "Expected closing ';' for statement");
 }
 
 // Gonna switch up and use Pratt Parsing for expressions (https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html)
@@ -235,4 +235,184 @@ std::unique_ptr<AST::Expr> Parser::parse_expr_bp(const int min_bp) {
     }
 
     return lhs;
+}
+
+/*
+ *
+ * Statements
+ * beyond this point
+ *
+ */
+
+std::unique_ptr<AST::Stmt> Parser::parse_statement() {
+    std::unique_ptr<AST::Stmt> result;
+    bool no_semi = false;
+    if (match(TokenType::LEFT_CURLY_BRACKET)) { no_semi = true; result = parse_block_stmt(); }
+    else if (match(TokenType::FUN)) { no_semi = true; result = parse_function_stmt();}
+    else if (match({TokenType::PRINT, TokenType::PRINTLN, TokenType::READ})) result = parse_io_stmt();
+    else if (match(TokenType::IF)) { no_semi = true; result = parse_if_else_stmt(); }
+    else if (match(TokenType::FOR)) { no_semi = true; result = parse_for_stmt(); }
+    else if (match(TokenType::WHILE)) { no_semi = true; result = parse_while_stmt(); }
+    else if (match(TokenType::RETURN)) result = parse_return_stmt();
+    else if (match(TokenType::BREAK)) result = parse_break_stmt();
+    else if (match(TokenType::CONTINUE)) result = parse_continue_stmt();
+    else if (match(TokenType::EXIT)) result = parse_exit_stmt();
+    else if (check(TokenType::INT32) || check(TokenType::BOOL)) result = parse_variable_decl_stmt();
+    else if (match(TokenType::SEMICOLON)) return nullptr;
+    else result = parse_expression_stmt();
+
+    if (!no_semi) consume(TokenType::SEMICOLON, "Expected closing ';' for statement");
+    return result;
+}
+
+std::unique_ptr<AST::Stmt> Parser::parse_block_stmt() {
+    std::vector<std::unique_ptr<AST::Stmt>> stmts;
+    while (!check(TokenType::RIGHT_CURLY_BRACKET) && !is_at_end()) {
+        if (std::unique_ptr<AST::Stmt> res{parse_statement()}; res != nullptr) stmts.emplace_back(std::move(res));
+    }
+    consume(TokenType::RIGHT_CURLY_BRACKET, "Expected '}' after block");
+    return std::make_unique<AST::Stmt>(AST::BlockStmt{std::move(stmts)});
+}
+
+// helper
+AST::VarTypeSpec Parser::parse_var_type() {
+    AST::VarTypeSpec result;
+    if (check(TokenType::INT32) || check(TokenType::BOOL)) {
+        if (check(TokenType::INT32)) result.type = AST::VarTypeOpts::INT32;
+        else result.type = AST::VarTypeOpts::BOOL;
+        advance();
+        result.is_array = check(TokenType::LEFT_SQUARE_BRACKET);
+        if (result.is_array) {
+            advance();
+            if (!check(TokenType::RIGHT_SQUARE_BRACKET)) {
+                result.size = stoi(consume(TokenType::NUMBER, "Expected a numeric size for array.").lexeme);
+            }
+            consume(TokenType::RIGHT_SQUARE_BRACKET, "Expected ']' for array declaration.");
+        }
+    }
+    else throw ParseException("Expected a valid type of variable.");
+    return result;
+}
+
+std::unique_ptr<AST::Stmt> Parser::parse_function_stmt() {
+    // needs a name, call types, return type, body
+    const std::string name = consume(TokenType::IDENTIFIER, "Expected function identifier.").lexeme;
+    consume(TokenType::LEFT_PAREN, "Function should open with '('.");
+    std::vector<AST::Param> params;
+    if (!check(TokenType::RIGHT_PAREN)) while (true) {
+        auto var_type = parse_var_type();
+        params.emplace_back(var_type, consume(TokenType::IDENTIFIER, "Expected variable name.").lexeme);
+        if (!match(TokenType::COMMA)) break;
+    }
+    consume(TokenType::RIGHT_PAREN, "Expected ')' for function.");
+    consume(TokenType::ARROW, "Expected '->' for function return type.");
+    std::optional<AST::VarTypeSpec> ret_type;
+    if (!match(TokenType::NIL)) { // Special case ! NIL return ! Do nothing -> optional return type
+        ret_type = parse_var_type();
+    }
+    auto body = parse_statement();
+    return std::make_unique<AST::Stmt>(AST::FuncDeclStmt{name, ret_type, std::move(params), std::move(body)});
+}
+
+std::unique_ptr<AST::Stmt> Parser::parse_variable_decl_stmt() { // very hacky may the programming gods please forgive my sins ;-;
+    const auto typ = parse_var_type();
+    std::vector<std::unique_ptr<AST::Stmt>> res;
+    while (true) {
+        const std::string name = consume(TokenType::IDENTIFIER, "Expected variable name.").lexeme;
+        std::unique_ptr<AST::Expr> init = nullptr;
+        if (match(TokenType::EQUAL)) {
+            init = parse_expr_bp(0);
+        }
+        res.emplace_back(std::make_unique<AST::Stmt>(AST::VarDeclStmt{typ, name, std::move(init)}));
+        if (!match(TokenType::COMMA)) break;
+    }
+    return std::make_unique<AST::Stmt>(AST::BlockStmt{std::move(res), true});
+}
+
+std::unique_ptr<AST::Stmt> Parser::parse_if_else_stmt() {
+    auto expr = parse_expr_bp(0);
+    consume(TokenType::COLON, "Expected ':' after if-condition.");
+    auto then_stmt = parse_statement();
+    std::unique_ptr<AST::Stmt> else_stmt = nullptr;
+    if (match(TokenType::ELIF)) {
+        else_stmt = parse_if_else_stmt();
+    }
+    else if (match(TokenType::ELSE)) {
+        consume(TokenType::COLON, "Expected ':' after else statement.");
+        else_stmt = parse_statement();
+    }
+    return std::make_unique<AST::Stmt>(AST::IfElseStmt{std::move(expr), std::move(then_stmt), std::move(else_stmt)});
+}
+
+std::unique_ptr<AST::Stmt> Parser::parse_for_stmt() {
+    const std::string iter_name = consume(TokenType::IDENTIFIER, "Expect a iterator variable for 'for'.").lexeme;
+    consume(TokenType::IN, "'For' requires an accompanying 'in'.");
+    auto expr = parse_expr_bp(0);
+    consume(TokenType::COLON, "Expected ':' after 'for'.");
+    auto body = parse_statement();
+    return std::make_unique<AST::Stmt>(AST::ForLoopStmt{iter_name, std::move(expr), std::move(body)});
+}
+
+std::unique_ptr<AST::Stmt> Parser::parse_while_stmt() {
+    auto expr = parse_expr_bp(0);
+    consume(TokenType::COLON, "Expected ':' after 'while'.");
+    auto body = parse_statement();
+    return std::make_unique<AST::Stmt>(AST::WhileLoopStmt{std::move(expr), std::move(body)});
+}
+
+std::unique_ptr<AST::Stmt> Parser::parse_io_stmt() {
+    if (previous_token().type == TokenType::PRINT) {
+        consume(TokenType::LEFT_PAREN, "Expected '(' after print.");
+        std::vector<std::unique_ptr<AST::Expr>> exprs;
+        if (!check(TokenType::RIGHT_PAREN)) while (true) {
+            exprs.emplace_back(parse_expr_bp(0));
+            if (!match(TokenType::COMMA)) break;
+        }
+        consume(TokenType::RIGHT_PAREN, "Expected ')' closing print.");
+        return std::make_unique<AST::Stmt>(AST::IOPrintStmt{std::move(exprs)});
+    }
+    if (previous_token().type == TokenType::PRINTLN) {
+        consume(TokenType::LEFT_PAREN, "Expected '(' after println.");
+        std::vector<std::unique_ptr<AST::Expr>> exprs;
+        if (!check(TokenType::RIGHT_PAREN)) while (true) {
+            exprs.emplace_back(parse_expr_bp(0));
+            if (!match(TokenType::COMMA)) break;
+        }
+        consume(TokenType::RIGHT_PAREN, "Expected ')' closing println.");
+        return std::make_unique<AST::Stmt>(AST::IOPrintlnStmt{std::move(exprs)});
+    }
+    // READ
+    consume(TokenType::LEFT_PAREN, "Expected '(' after read.");
+    std::vector<std::string> names;
+    if (!check(TokenType::RIGHT_PAREN)) while (true) {
+        names.emplace_back(consume(TokenType::IDENTIFIER, "Expected an identifier for read.").lexeme);
+        if (!match(TokenType::COMMA)) break;
+    }
+    consume(TokenType::RIGHT_PAREN, "Expected ')' closing read.");
+    return std::make_unique<AST::Stmt>(AST::IOReadStmt{std::move(names)});
+}
+
+std::unique_ptr<AST::Stmt> Parser::parse_expression_stmt() {
+    std::unique_ptr<AST::Expr> expr{ parse_expr_bp(0) };
+    return std::make_unique<AST::Stmt>(AST::ExprStmt{std::move(expr)});
+}
+
+std::unique_ptr<AST::Stmt> Parser::parse_return_stmt() {
+    std::unique_ptr<AST::Expr> expr;
+    if (!check(TokenType::SEMICOLON)) expr = parse_expr_bp(0);
+    return std::make_unique<AST::Stmt>(AST::ReturnStmt{std::move(expr)});
+}
+
+std::unique_ptr<AST::Stmt> Parser::parse_break_stmt() {
+    return std::make_unique<AST::Stmt>(AST::BreakStmt{});
+}
+
+std::unique_ptr<AST::Stmt> Parser::parse_continue_stmt() {
+    return std::make_unique<AST::Stmt>(AST::ContinueStmt{});
+}
+std::unique_ptr<AST::Stmt> Parser::parse_exit_stmt() {
+    consume(TokenType::LEFT_PAREN, "Expected '(' after exit.");
+    std::unique_ptr<AST::Expr> expr{ parse_expr_bp(0) };
+    consume(TokenType::RIGHT_PAREN, "Expected ')' after exit expression.");
+    return std::make_unique<AST::Stmt>(AST::ExitStmt{std::move(expr)});
 }
