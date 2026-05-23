@@ -47,5 +47,8 @@ int main(int argc, char** argv) {
     std::cout << "Parsing successful." << std::endl;
     std::cout << parser.print_ast() << std::endl;
 
+    std::vector<std::unique_ptr<AST::Stmt>> ast = parser.get_ast();
+
+
     return 0;
 }
