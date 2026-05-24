@@ -63,7 +63,7 @@ public:
     void parse();
     [[nodiscard]] bool has_errors() const;
     [[nodiscard]] std::string print_errors() const;
-    [[nodiscard]] std::vector<std::unique_ptr<AST::Stmt>> get_ast();
+    [[nodiscard]] std::vector<std::unique_ptr<AST::Stmt>> take_ast();
     [[nodiscard]] std::string print_ast() const;
 };
 

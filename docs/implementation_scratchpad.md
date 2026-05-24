@@ -73,3 +73,42 @@ Note : I used C / C++ priorities acting as reference
 ```
 
 Note : empty statements can be ignored
+
+#### Parsing done, semantics...
+
+- [x] Create `SemanticAnalyzer` class
+- [x] Create semantic error structure
+- [x] Add semantic error collection
+- [x] Add AST type annotations
+- [x] Create `Symbol` structure
+- [x] Create scope stack
+- [x] Push/pop lexical scopes
+- [x] Variable lookup helper
+- [x] Function lookup helper
+- [x] Function signature table
+- [ ] Register functions before body analysis
+- [ ] Parameter scope insertion
+- [ ] Track current function return type
+- [ ] Literal typing
+- [ ] Variable lookup/type resolution
+- [ ] Unary op checking
+- [ ] Binary op checking
+- [ ] Assignment validation
+- [ ] Array indexing checks
+- [ ] Function call validation
+- [ ] Return inferred expression type
+- [ ] Variable declaration checks
+- [ ] Redeclaration checks
+- [ ] Assignment compatibility checks
+- [ ] If-condition bool validation
+- [ ] While-condition bool validation
+- [ ] For-loop iterable checks
+- [ ] Return statement checks
+- [ ] Break/continue loop validation
+- [ ] Scope-aware block analysis
+- [ ] Array type checking
+- [ ] Array index integer validation
+- [ ] Array assignment validation
+- [ ] Range literal typing
+- [ ] Missing returns (optional V1)
+- [ ] Unreachable code (optional V1)

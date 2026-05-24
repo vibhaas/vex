@@ -1,5 +1,5 @@
-# orz orz
+fun test(i32 hi) -> i32 {
+    return 10;
+}
 
-i32 i = 0;
-while i < 10:
-    println("Hello, world!");
+(test(10)+1);

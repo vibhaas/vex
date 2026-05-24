@@ -26,7 +26,7 @@ std::string Parser::print_errors() const {
     }
     return value;
 }
-std::vector<std::unique_ptr<AST::Stmt>> Parser::get_ast()  {
+std::vector<std::unique_ptr<AST::Stmt>> Parser::take_ast()  {
     return std::move(ast);
 }
 std::string Parser::print_ast() const {
