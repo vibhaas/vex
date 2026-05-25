@@ -1,0 +1,26 @@
+#
+# First Vex Sieve
+#
+
+bool[1000] a;
+
+i32 N_max = 100;
+read(N_max);
+
+for i in [2..N_max+1]: a[i-1] = true;
+
+for i in [2..N_max+1]: {
+    if !a[i-1]: break;
+
+    i32 j = 2*i;
+    while j <= N_max+1: {
+        a[j-1] = false;
+        j = j + i;
+    }
+}
+
+for i in [1..N_max+1]: {
+    print(i, " -> ");
+    if !a[i-1]: print("not ");
+    println("prime!");
+}

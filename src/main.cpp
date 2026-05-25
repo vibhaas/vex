@@ -12,18 +12,19 @@
 #include "ast/Ast.hpp"
 #include "parser/Parser.hpp"
 #include "semantics/Semantics.hpp"
+#include "llvm-immediate/LLVMImmediate.hpp"
 
 int main(int argc, char** argv) {
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " [options] <filename>\n";
-        std::exit(get_error_code(ErrorCode::INCORRECT_USAGE));
+        std::exit(get_error_code(ErrorCode::INCORRECT_USAGE)); // see error_codes.md
     }
 
-    bool verbose = false, extra_verbose = false, stop_tokens = false, stop_ast = false, stop_semantics = false, immediate_llvm = false,
-    emit_ir = false, optimized_llvm = false;
+    bool verbose = false, extra_verbose = false, stop_tokens = false, stop_ast = false, stop_semantics = false,
+        immediate_llvm = false, immediate_run = false, emit_ir = false, optimized_llvm = false;
     std::string filename;
 
-    // Parse command line arguments
+    // Flags
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--verbose") verbose = true;
@@ -32,6 +33,7 @@ int main(int argc, char** argv) {
         else if (arg == "--ast") stop_ast = true;
         else if (arg == "--semantics") stop_semantics = true;
         else if (arg == "--immediate-llvm") immediate_llvm = true;
+        else if (arg == "--immediate-run") immediate_run = true;
         else if (arg == "--emit-ir") emit_ir = true;
         else if (arg == "--optimized-llvm") optimized_llvm = true;
         else if (arg[0] == '-') {
@@ -57,7 +59,7 @@ int main(int argc, char** argv) {
         std::exit(get_error_code(ErrorCode::INPUT_ERROR));
     }
 
-    // 1. Lexical Analysis
+    // Lexing
     bool lexerError = false;
     std::vector<Token> tokens = Lexer::tokenize(f, lexerError);
     if (lexerError) {
@@ -67,11 +69,11 @@ int main(int argc, char** argv) {
     if (verbose) std::cout << "Lexing successful.\n";
     if (stop_tokens || extra_verbose) {
         for (const auto& token : tokens) std::cout << token.to_string() << " ";
-        std::cout << "\n";
+        std::cout << "\n\n";
         if (stop_tokens) return 0;
     }
 
-    // 2. Parsing
+    // Parsing
     Parser parser(std::move(tokens));
     parser.parse();
     if (parser.has_errors()) {
@@ -84,7 +86,7 @@ int main(int argc, char** argv) {
         if (stop_ast) return 0;
     }
 
-    // 3. Semantic Analysis
+    // Semantic Analysis
     SemanticAnalyzer sem(parser.take_ast());
     sem.analyze();
     if (sem.error()) {
@@ -97,24 +99,38 @@ int main(int argc, char** argv) {
         if (stop_semantics) return 0;
     }
 
-    // 4. Backend Generation
-    if (immediate_llvm) {
+    // Immediate Backend Generation
+    if (immediate_llvm || immediate_run) {
         if (verbose) std::cout << "Generating immediate LLVM IR...\n";
-        // TODO: Pass semantic AST to immediate LLVM generator
+        LLVMImmediate llvmi(sem.take_ast());
+        llvmi.build();
+        if (immediate_llvm || extra_verbose) {
+            std::cout << llvmi.print_llvm() << "\n";
+            if (immediate_llvm) return 0;
+        }
+        if (!llvmi.error()) {
+            if (verbose) std::cout << "Executing.. \n";
+            llvmi.execute();
+        }
         return 0;
     }
 
-    if (verbose) std::cout << "Generating custom SSA IR...\n";
-    // TODO: Pass semantic AST to Custom SSA IR generator
+    // TODO: VexIR generator
+    if (verbose) std::cout << "Generated VexIR.\n";
 
-    if (emit_ir) {
-        if (verbose) std::cout << "Emitting custom SSA IR...\n";
-        // TODO: Print the custom SSA IR
-        return 0;
+    if (emit_ir || extra_verbose) {
+        // TODO: Print VexIR
+        if (emit_ir) return 0;
     }
 
-    if (verbose || optimized_llvm) std::cout << "Lowering SSA IR to optimized LLVM IR...\n";
-    // TODO: Pass Custom SSA IR to LLVM lowering phase
+    // TODO: VexIR to LLVM lowering phase
+    if (verbose || optimized_llvm) std::cout << "Lowered SSA IR to optimized LLVM IR.\n";
+    if (optimized_llvm || extra_verbose) {
+        // Todo: Print optimized LLVM IR
+        if (optimized_llvm) return 0;
+    }
+
+    // TODO: Final run here
 
     return 0;
 }

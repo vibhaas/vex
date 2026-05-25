@@ -10,6 +10,10 @@ SemanticAnalyzer::SemanticAnalyzer(std::vector<std::unique_ptr<AST::Stmt>> p_ast
     bump_scope();
 }
 
+std::vector<std::unique_ptr<AST::Stmt>> SemanticAnalyzer::take_ast()  {
+    return std::move(ast);
+}
+
 void SemanticAnalyzer::analyze() {
     // first, function registrations
     // functions have to be top-level scope

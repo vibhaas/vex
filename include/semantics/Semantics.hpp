@@ -55,6 +55,7 @@ public:
     void analyze();
     constexpr bool error() const { return is_error; }
     [[nodiscard]] std::string print_ast() const;
+    [[nodiscard]] std::vector<std::unique_ptr<AST::Stmt>> take_ast();
 };
 
 #endif //VEXC_SEMANTICS_H

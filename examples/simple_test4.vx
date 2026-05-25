@@ -1,5 +1,11 @@
-fun test(i32 hi) -> i32 {
-    return 10;
+fun fib(i32 n) -> i32 {
+    if n <= 1:
+        return n;
+    else: {
+        i32 a = fib(n - 1), b = fib(n - 2);
+        return a + b;
+    }
 }
 
-(test(10)+1);
+for i in [1..15]:
+    println(fib(i));
