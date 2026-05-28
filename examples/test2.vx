@@ -1,0 +1,12 @@
+# Basic Vectorization example
+
+i32 a = 1;
+i32 b = 2;
+i32 c = 3;
+i32 d = 4;
+
+i32 x = a + b, y = c + d;
+
+println(x);
+println(y);
+

@@ -22,6 +22,9 @@ add_executable(vexc
         include/semantics/Semantics.hpp
         include/llvm-immediate/LLVMImmediate.hpp
         src/llvm-immediate/LLVMImmediate.cpp
+        include/vex-ir/VexIR.hpp
+        include/vex-ir-gen/VexIRGenerator.hpp
+        src/vex-ir-gen/VexIRGenerator.cpp
 )
 
 target_include_directories(vexc PRIVATE include)

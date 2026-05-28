@@ -13,6 +13,7 @@
 #include "parser/Parser.hpp"
 #include "semantics/Semantics.hpp"
 #include "llvm-immediate/LLVMImmediate.hpp"
+#include "vex-ir-gen/VexIRGenerator.hpp"
 
 int main(int argc, char** argv) {
     if (argc < 2) {
@@ -21,7 +22,7 @@ int main(int argc, char** argv) {
     }
 
     bool verbose = false, extra_verbose = false, stop_tokens = false, stop_ast = false, stop_semantics = false,
-        immediate_llvm = false, immediate_run = false, emit_ir = false, optimized_llvm = false;
+        immediate_llvm = false, immediate_run = false, emit_ir = false, emit_raw_ir = false, optimized_llvm = false;
     std::string filename;
 
     // Flags
@@ -35,6 +36,7 @@ int main(int argc, char** argv) {
         else if (arg == "--immediate-llvm") immediate_llvm = true;
         else if (arg == "--immediate-run") immediate_run = true;
         else if (arg == "--emit-ir") emit_ir = true;
+        else if (arg == "--emit-raw-ir") emit_raw_ir = true;
         else if (arg == "--optimized-llvm") optimized_llvm = true;
         else if (arg[0] == '-') {
             std::cerr << "Unknown flag: " << arg << "\n";
@@ -116,19 +118,33 @@ int main(int argc, char** argv) {
     }
 
     // TODO: VexIR generator
+    VexIRGenerator vexir(sem.take_ast());
+    vexir.build();
+    if (vexir.error()) {
+        std::cerr << "Compilation stopped: VexIR lowering error.\n";
+        std::exit(get_error_code(ErrorCode::DATA_ERROR));
+    }
     if (verbose) std::cout << "Generated VexIR.\n";
 
-    if (emit_ir || extra_verbose) {
-        // TODO: Print VexIR
+    if (emit_raw_ir || extra_verbose) {
+        if (extra_verbose) std::cout << "RAW VEXIR:\n";
+        std::cout << vexir.print_raw_ir() << "\n";
+        if (emit_raw_ir && !emit_ir) return 0;
+        if (extra_verbose || emit_ir) std::cout << "\n";
+    }
+
+    if (emit_ir || extra_verbose || true) { // TODO: remove if(true) when the next phase is done
+        if (extra_verbose) std::cout << "OPTIMIZED VEXIR:\n";
+        std::cout << vexir.print_ir() << "\n";
         if (emit_ir) return 0;
     }
 
     // TODO: VexIR to LLVM lowering phase
-    if (verbose || optimized_llvm) std::cout << "Lowered SSA IR to optimized LLVM IR.\n";
-    if (optimized_llvm || extra_verbose) {
-        // Todo: Print optimized LLVM IR
-        if (optimized_llvm) return 0;
-    }
+    // if (verbose || optimized_llvm) std::cout << "Lowered SSA IR to LLVM IR.\n";
+    // if (optimized_llvm || extra_verbose) {
+    //     // Todo: Print optimized LLVM IR
+    //     if (optimized_llvm) return 0;
+    // }
 
     // TODO: Final run here
 

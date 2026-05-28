@@ -1,0 +1,9 @@
+
+## Basic test
+# This program reads a number, multiples by ten, and then prints the output.
+
+i32 x;
+print("Enter a number: ");
+read(x);
+println(x, " times 10 is ", 10 * x);
+
