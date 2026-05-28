@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
     }
 
     bool verbose = false, extra_verbose = false, stop_tokens = false, stop_ast = false, stop_semantics = false,
-        immediate_llvm = false, immediate_run = false, emit_ir = false, emit_raw_ir = false, optimized_llvm = false;
+        immediate_llvm = false, immediate_run = false, emit_ir = false, emit_raw_ir = false; //, optimized_llvm = false;
     std::string filename;
 
     // Flags
@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
         else if (arg == "--immediate-run") immediate_run = true;
         else if (arg == "--emit-ir") emit_ir = true;
         else if (arg == "--emit-raw-ir") emit_raw_ir = true;
-        else if (arg == "--optimized-llvm") optimized_llvm = true;
+       // else if (arg == "--optimized-llvm") optimized_llvm = true;
         else if (arg[0] == '-') {
             std::cerr << "Unknown flag: " << arg << "\n";
             std::exit(get_error_code(ErrorCode::INCORRECT_USAGE));

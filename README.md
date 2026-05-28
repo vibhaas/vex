@@ -19,16 +19,16 @@ What is already working:
 
 ## Visuals
 
-A visual of [examples/test1.vx] which demonstrates the lexing, parsing, semantics, and LLVM lowering:
+A visual of [examples/test1.vx](examples/test1.vx) which demonstrates the lexing, parsing, semantics, and LLVM lowering:
 
 <p align="center">
   <img src="examples/test1.gif" alt="test1 gif" width="800" />
 </p>
 
-A visual of [examples/test2.vx] which demonstrates the entire pipeline, as well as emitted raw VexIR and vectorized VexIR:
+A visual of [examples/test2.vx](examples/test2.vx) which demonstrates the entire pipeline, as well as emitted raw VexIR and vectorized VexIR:
 
 <p align="center">
-  <img src="examples/test1.gif" alt="test1 gif" width="800" />
+  <img src="examples/test2.gif" alt="test2 gif" width="800" />
 </p>
 
 ## Pipeline
@@ -54,7 +54,7 @@ Current stages:
 Run one of the examples:
 
 ```bash
-./cmake-build-debug/vexc --immediate-run examples/test.vx
+./cmake-build-debug/vexc --immediate-run examples/test1.vx
 ```
 
 Useful flags:
@@ -70,21 +70,21 @@ Useful flags:
 
 ## Examples
 
-- [examples/simple_test1.vx](/home/accord/vexc-alter/examples/simple_test1.vx) - hello world
-- [examples/simple_test2.vx](/home/accord/vexc-alter/examples/simple_test2.vx) - operators
-- [examples/simple_test3.vx](/home/accord/vexc-alter/examples/simple_test3.vx) - loops and conditionals
-- [examples/simple_test4.vx](/home/accord/vexc-alter/examples/simple_test4.vx) - recursive Fibonacci
-- [examples/lexer_error_test1.vx](/home/accord/vexc-alter/examples/lexer_error_test1.vx) - lexer failure cases
+- [examples/simple_test1.vx](examples/simple_test1.vx) - hello world
+- [examples/simple_test2.vx](examples/simple_test2.vx) - operators
+- [examples/simple_test3.vx](examples/simple_test3.vx) - loops and conditionals
+- [examples/simple_test4.vx](examples/simple_test4.vx) - recursive Fibonacci
+- [examples/lexer_error_test1.vx](examples/lexer_error_test1.vx) - lexer failure cases
 
 ## Layout
 
-- [src](/home/accord/vexc-alter/src) - compiler implementation
-- [include](/home/accord/vexc-alter/include) - headers
-- [examples](/home/accord/vexc-alter/examples) - sample Vex programs
-- [docs](/home/accord/vexc-alter/docs) - syntax notes, IR notes, and error codes
+- [src](src) - compiler implementation
+- [include](include) - headers
+- [examples](examples) - sample Vex programs
+- [docs](docs) - syntax notes, IR notes, and error codes
 
 ## Notes
 
-- See [docs/syntax.md](/home/accord/vexc-alter/docs/syntax.md) for the current Vex language syntax
-- See [docs/IR syntax.md](/home/accord/vexc-alter/docs/IR%20syntax.md) for the current VexIR shape
-- See [docs/error_codes.md](/home/accord/vexc-alter/docs/error_codes.md) for compiler exit codes
+- See [docs/syntax.md](docs/syntax.md) for the current Vex language syntax
+- See [docs/IR syntax.md](docs/IR%20syntax.md) for the current VexIR shape
+- See [docs/error_codes.md](docs/error_codes.md) for compiler exit codes

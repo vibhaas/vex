@@ -28,9 +28,9 @@ add_executable(vexc
 )
 
 target_include_directories(vexc PRIVATE include)
+target_include_directories(vexc SYSTEM PRIVATE ${LLVM_INCLUDE_DIRS})
 target_compile_options(vexc PRIVATE -Wall -Wextra -Wpedantic -Werror)
 
-include_directories(vexc SYSTEM PRIVATE ${LLVM_INCLUDE_DIRS})
 separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
 add_definitions(${LLVM_DEFINITIONS_LIST})
 llvm_map_components_to_libnames(llvm_libs support core irreader executionengine mcjit native)
