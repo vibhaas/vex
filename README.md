@@ -68,14 +68,6 @@ Useful flags:
 - `--emit-ir` prints optimized SSA VexIR after vectorization
 - `--extra-verbose` prints every intermediate stage
 
-## Examples
-
-- [examples/simple_test1.vx](examples/simple_test1.vx) - hello world
-- [examples/simple_test2.vx](examples/simple_test2.vx) - operators
-- [examples/simple_test3.vx](examples/simple_test3.vx) - loops and conditionals
-- [examples/simple_test4.vx](examples/simple_test4.vx) - recursive Fibonacci
-- [examples/lexer_error_test1.vx](examples/lexer_error_test1.vx) - lexer failure cases
-
 ## Layout
 
 - [src](src) - compiler implementation
